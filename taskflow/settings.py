@@ -1,4 +1,4 @@
-import os
+import os,socket
 from pathlib import Path
 from decouple import config
 
@@ -54,17 +54,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'taskflow.wsgi.application'
 
+def force_ipv4_resolution():
+    orig_getaddrinfo = socket.getaddrinfo
+
+    def ipv4_only(host, *args, **kwargs):
+        return orig_getaddrinfo(host, socket.AF_INET, *args, **kwargs)
+
+    socket.getaddrinfo = ipv4_only
+
+force_ipv4_resolution()
+# ------------------------------------------------------------------------
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
-        'OPTIONS': {
-            'sslmode': 'require',  # Supabase needs SSL
-        },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT", default="6543"),
+        "OPTIONS": {"sslmode": "require"},
     }
 }
 
